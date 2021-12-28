@@ -6,30 +6,30 @@
   Copyright © 2021 AnyImageProject.org. All rights reserved.
 */
 
-"OK" = "Tamam";
-"BACK" = "Geri";
-"DONE" = "Tamam";
-"EDIT" = "Düzenle";
-"ALERT" = "Uyarı";
-"CANCEL" = "Vazgeç";
-"PREVIEW" = "Önizleme";
-"PHOTOS" = "Fotoğraflar";
-"CAMERA" = "Kamera";
-"MICROPHONE" = "Mikrofon";
-"SETTINGS" = "Ayarlar";
+"OK" = "tamam";
+"BACK" = "geri";
+"DONE" = "tamam";
+"EDIT" = "düzenle";
+"ALERT" = "uyarı";
+"CANCEL" = "vazgeç";
+"PREVIEW" = "önizleme";
+"PHOTOS" = "fotoğraflar";
+"CAMERA" = "kamera";
+"MICROPHONE" = "mikrofon";
+"SETTINGS" = "ayarlar";
 
-"PHOTO" = "Fotoğraf";
-"VIDEO" = "Video";
-"LIVE_PHOTO" = "CANLI";
-"LOADING" = "Yükleniyor";
+"PHOTO" = "fotoğraf";
+"VIDEO" = "video";
+"LIVE_PHOTO" = "canlı";
+"LOADING" = "yükleniyor";
 
-"UNDO" = "Geri Al";
-"PLAY" = "Oynat";
-"PAUSE" = "Duraklat";
-"RESET" = "Sıfırla";
-"DOWNLOADING" = "İndiriliyor";
+"UNDO" = "geri al";
+"PLAY" = "oynat";
+"PAUSE" = "duraklat";
+"RESET" = "sıfırla";
+"DOWNLOADING" = "indiriliyor";
 
-"GO_TO_SETTINGS" = "Ayarlara git";
+"GO_TO_SETTINGS" = "ayarlara git";
 "PERMISSION_IS_DISABLED" = "%@ devredışı";
 "NO_PHOTOS_PERMISSION_TIPS" = "%@, albümüne erişmek istiyor, izin vermek için: \"Ayarlar > Gizlilik > Fotoğraflar\"";
 "NO_CAMERA_PERMISSION_TIPS" = "%@, kamerana erişmek istiyor, izin vermek için: \"Ayarlar > Gizlilik > Kamera\"";
