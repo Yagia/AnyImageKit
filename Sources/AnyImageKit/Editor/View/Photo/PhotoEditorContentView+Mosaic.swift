@@ -3,7 +3,7 @@
 //  AnyImageKit
 //
 //  Created by 蒋惠 on 2019/10/29.
-//  Copyright © 2019-2021 AnyImageProject.org. All rights reserved.
+//  Copyright © 2019-2022 AnyImageKit.org. All rights reserved.
 //
 
 import UIKit
@@ -38,7 +38,7 @@ extension PhotoEditorContentView {
             !options.cacheIdentifier.isEmpty,
             let data = image.jpegData(compressionQuality: 1.0) else { return }
         let filename = options.cacheIdentifier
-        let queue = DispatchQueue(label: "org.AnyImageProject.AnyImageKit.DispatchQueue.CacheMosaicImage")
+        let queue = DispatchQueue(label: "org.AnyImageKit.DispatchQueue.CacheMosaicImage")
         queue.async {
             FileHelper.write(photoData: data, fileType: .jpeg, filename: filename)
         }

@@ -3,7 +3,7 @@
 //  AnyImageKit
 //
 //  Created by 蒋惠 on 2019/9/27.
-//  Copyright © 2019-2021 AnyImageProject.org. All rights reserved.
+//  Copyright © 2019-2022 AnyImageKit.org. All rights reserved.
 //
 
 import UIKit
@@ -358,5 +358,5 @@ extension PreviewCell: UIGestureRecognizerDelegate {
 
 extension Notification.Name {
     
-    static let previewCellDidDownloadResource = Notification.Name("org.AnyImageProject.AnyImageKit.Notification.Name.Picker.PreviewCellDidDownloadResource")
+    static let previewCellDidDownloadResource = Notification.Name("org.AnyImageKit.Notification.Name.Picker.PreviewCellDidDownloadResource")
 }

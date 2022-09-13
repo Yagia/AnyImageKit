@@ -3,7 +3,7 @@
 //  AnyImageKit
 //
 //  Created by 蒋惠 on 2019/9/17.
-//  Copyright © 2019-2021 AnyImageProject.org. All rights reserved.
+//  Copyright © 2019-2022 AnyImageKit.org. All rights reserved.
 //
 
 import UIKit
@@ -378,6 +378,7 @@ extension PhotoPreviewController {
             }
             selectButtonTapped(navigationBar.selectButton)
         }
+        scalePresentationController?.updateMask = false
         delegate?.previewControllerWillDisappear(self)
         delegate?.previewControllerDidClickDone(self)
         trackObserver?.track(event: .pickerDone, userInfo: [.page: AnyImagePage.pickerPreview])

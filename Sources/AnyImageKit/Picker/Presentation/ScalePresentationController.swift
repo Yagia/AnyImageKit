@@ -3,7 +3,7 @@
 //  AnyImageKit
 //
 //  Created by 蒋惠 on 2019/9/17.
-//  Copyright © 2019-2021 AnyImageProject.org. All rights reserved.
+//  Copyright © 2019-2022 AnyImageKit.org. All rights reserved.
 //
 
 import UIKit
@@ -17,6 +17,8 @@ final class ScalePresentationController: UIPresentationController {
             maskView.alpha = newValue
         }
     }
+    
+    var updateMask: Bool = true
     
     /// 蒙板
     private(set) var maskView: UIView = {
@@ -32,14 +34,18 @@ final class ScalePresentationController: UIPresentationController {
         maskView.frame = containerView.bounds
         maskView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         maskView.alpha = 0
-        presentedViewController.transitionCoordinator?.animate(alongsideTransition: { _ in
-            self.maskView.alpha = 1
+        presentedViewController.transitionCoordinator?.animate(alongsideTransition: { [weak self] _ in
+            if self?.updateMask ?? false {
+                self?.maskView.alpha = 1
+            }
         }, completion: nil)
     }
     
     override func dismissalTransitionWillBegin() {
-        presentedViewController.transitionCoordinator?.animate(alongsideTransition: { _ in
-            self.maskView.alpha = 0
+        presentedViewController.transitionCoordinator?.animate(alongsideTransition: { [weak self] _ in
+            if self?.updateMask ?? false {
+                self?.maskView.alpha = 0
+            }
         })
     }
 }

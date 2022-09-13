@@ -3,7 +3,7 @@
 //  AnyImageKit
 //
 //  Created by 刘栋 on 2019/9/27.
-//  Copyright © 2019-2021 AnyImageProject.org. All rights reserved.
+//  Copyright © 2019-2022 AnyImageKit.org. All rights reserved.
 //
 
 import Photos
@@ -17,10 +17,6 @@ extension PickerManager {
         }
         if !options.selectOptions.mediaTypes.contains(.image) {
             fetchOptions.predicate = NSPredicate(format: "mediaType == %ld", PHAssetMediaType.video.rawValue)
-        }
-        if options.orderByDate == .desc {
-            let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: false)
-            fetchOptions.sortDescriptors = [sortDescriptor]
         }
         return fetchOptions
     }
@@ -37,7 +33,8 @@ extension PickerManager {
                                    identifier: assetCollection.localIdentifier,
                                    title: assetCollection.localizedTitle,
                                    isCameraRoll: true,
-                                   selectOptions: options.selectOptions)
+                                   selectOptions: options.selectOptions,
+                                   sort: options.orderByDate)
                 completion(result)
                 return
             }
@@ -58,7 +55,8 @@ extension PickerManager {
                                        identifier: assetCollection.localIdentifier,
                                        title: assetCollection.localizedTitle,
                                        isCameraRoll: assetCollection.isCameraRoll,
-                                       selectOptions: self.options.selectOptions)
+                                       selectOptions: self.options.selectOptions,
+                                       sort: self.options.orderByDate)
                     DispatchQueue.main.async {
                         completion(result)
                         return
@@ -92,14 +90,16 @@ extension PickerManager {
                                            identifier: assetCollection.localIdentifier,
                                            title: assetCollection.localizedTitle,
                                            isCameraRoll: true,
-                                           selectOptions: self.options.selectOptions)
+                                           selectOptions: self.options.selectOptions,
+                                           sort: self.options.orderByDate)
                         results.insert(result, at: 0)
                     } else {
                         let result = Album(fetchResult: assetFetchResult,
                                            identifier: assetCollection.localIdentifier,
                                            title: assetCollection.localizedTitle,
                                            isCameraRoll: false,
-                                           selectOptions: self.options.selectOptions)
+                                           selectOptions: self.options.selectOptions,
+                                           sort: self.options.orderByDate)
                         results.append(result)
                     }
                 }

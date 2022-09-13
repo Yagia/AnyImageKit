@@ -3,7 +3,7 @@
 //  AnyImageKit
 //
 //  Created by 刘栋 on 2019/7/22.
-//  Copyright © 2019-2021 AnyImageProject.org. All rights reserved.
+//  Copyright © 2019-2022 AnyImageKit.org. All rights reserved.
 //
 
 import AVFoundation
@@ -19,7 +19,7 @@ final class AudioIOComponent: DeviceIOComponent {
     weak var delegate: AudioIOComponentDelegate?
     
     private let audioOutput = AVCaptureAudioDataOutput()
-    private let workQueue = DispatchQueue(label: "org.AnyImageProject.AnyImageKit.DispatchQueue.AudioCapture")
+    private let workQueue = DispatchQueue(label: "org.AnyImageKit.DispatchQueue.AudioCapture")
     
     private let options: CaptureOptionsInfo
     

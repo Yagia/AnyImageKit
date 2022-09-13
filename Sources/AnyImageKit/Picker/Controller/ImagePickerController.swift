@@ -3,7 +3,7 @@
 //  AnyImageKit
 //
 //  Created by 刘栋 on 2019/9/16.
-//  Copyright © 2019-2021 AnyImageProject.org. All rights reserved.
+//  Copyright © 2019-2022 AnyImageKit.org. All rights reserved.
 //
 
 import UIKit
@@ -28,7 +28,7 @@ open class ImagePickerController: AnyImageNavigationController {
     
     private var containerSize: CGSize = .zero
     private var didFinishSelect: Bool = false
-    private let workQueue = DispatchQueue.init(label: "org.AnyImageProject.AnyImageKit.DispatchQueue.ImagePickerController")
+    private let workQueue = DispatchQueue.init(label: "org.AnyImageKit.DispatchQueue.ImagePickerController")
     
     private let manager: PickerManager = .init()
     
@@ -75,7 +75,8 @@ open class ImagePickerController: AnyImageNavigationController {
     }
     
     open override func dismiss(animated flag: Bool, completion: (() -> Void)?) {
-        if let _ = presentedViewController as? PhotoPreviewController {
+        if let previewController = presentedViewController as? PhotoPreviewController {
+            previewController.transitioningDelegate = nil
             presentingViewController?.dismiss(animated: flag, completion: completion)
         } else {
             super.dismiss(animated: flag, completion: completion)

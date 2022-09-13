@@ -3,7 +3,7 @@
 //  AnyImageKit
 //
 //  Created by 刘栋 on 2019/7/22.
-//  Copyright © 2019-2021 AnyImageProject.org. All rights reserved.
+//  Copyright © 2019-2022 AnyImageKit.org. All rights reserved.
 //
 
 import AVFoundation
@@ -25,7 +25,7 @@ final class Recorder {
     
     private(set) var isRunning: Bool = false
     
-    private let workQueue = DispatchQueue(label: "org.AnyImageProject.AnyImageKit.DispatchQueue.Recorder")
+    private let workQueue = DispatchQueue(label: "org.AnyImageKit.DispatchQueue.Recorder")
     
     private var writer: AVAssetWriter?
     private var writerInputs: [AVMediaType: AVAssetWriterInput] = [:]

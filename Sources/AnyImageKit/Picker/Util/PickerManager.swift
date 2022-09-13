@@ -3,7 +3,7 @@
 //  AnyImageKit
 //
 //  Created by 刘栋 on 2019/9/16.
-//  Copyright © 2019-2021 AnyImageProject.org. All rights reserved.
+//  Copyright © 2019-2022 AnyImageKit.org. All rights reserved.
 //
 
 import UIKit
@@ -40,7 +40,7 @@ final class PickerManager {
     
     init() { }
     
-    let workQueue = DispatchQueue(label: "org.AnyImageProject.AnyImageKit.DispatchQueue.PickerManager")
+    let workQueue = DispatchQueue(label: "org.AnyImageKit.DispatchQueue.PickerManager")
     let resizeSemaphore = DispatchSemaphore(value: 3)
 }
 

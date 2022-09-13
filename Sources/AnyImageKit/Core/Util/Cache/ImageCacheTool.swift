@@ -3,7 +3,7 @@
 //  AnyImageKit
 //
 //  Created by 蒋惠 on 2020/12/1.
-//  Copyright © 2020-2021 AnyImageProject.org. All rights reserved.
+//  Copyright © 2020-2022 AnyImageKit.org. All rights reserved.
 //
 
 import UIKit
@@ -20,7 +20,7 @@ struct ImageCacheTool: Cacheable {
     init(module: CacheModule, path: String = "", memoryCountLimit: Int = 5, useDiskCache: Bool = false) {
         self.module = module
         self.path = path.isEmpty ? module.path : path
-        self.workQueue = DispatchQueue(label: "org.AnyImageProject.AnyImageKit.DispatchQueue.CacheTool.\(module.title).\(module.subTitle)")
+        self.workQueue = DispatchQueue(label: "org.AnyImageKit.DispatchQueue.CacheTool.\(module.title).\(module.subTitle)")
         self.useDiskCache = useDiskCache
         do {
             self.cache = try ImageCache(name: "AnyImageKitImageCache", cacheDirectoryURL: URL(fileURLWithPath: self.path))
