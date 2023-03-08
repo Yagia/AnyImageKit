@@ -29,12 +29,28 @@ final class AssetPickerViewController: AnyImageViewController {
     private var preferredCollectionWidth: CGFloat = .zero
     private var autoScrollToLatest: Bool = false
     private var didRegisterPhotoLibraryChangeObserver: Bool = false
+    private var containerSize: CGSize = ScreenHelper.mainBounds.size
     
-    private lazy var dataSource: UICollectionViewDiffableDataSource<Section, Asset> = {
-        return UICollectionViewDiffableDataSource<Section, Asset>(collectionView: collectionView) { (collectionView, indexPath, asset) -> UICollectionViewCell? in
-            return nil
+    #if swift(>=5.5)
+    private var _dataSource: Any?
+    @available(iOS 14.0, *)
+    private var dataSource: UICollectionViewDiffableDataSource<Section, Asset> {
+        get {
+            if _dataSource == nil {
+                _dataSource = UICollectionViewDiffableDataSource<Section, Asset>(collectionView: collectionView) { (collectionView, indexPath, asset) -> UICollectionViewCell? in
+                    return nil
+                }
+            }
+            return _dataSource as! UICollectionViewDiffableDataSource<Section, Asset>
         }
-    }()
+        set {
+            _dataSource = newValue
+        }
+    }
+    #else
+    @available(iOS 14.0, *)
+    private lazy var dataSource = UICollectionViewDiffableDataSource<Section, Asset>()
+    #endif
     
     lazy var stopReloadAlbum: Bool = false
     
@@ -98,6 +114,8 @@ final class AssetPickerViewController: AnyImageViewController {
         return 0
         #endif
     }
+    
+    private weak var previewController: PhotoPreviewController?
     
     let manager: PickerManager
     
@@ -234,10 +252,21 @@ extension AssetPickerViewController {
         guard self.album != album else { return }
         self.album = album
         titleView.setTitle(album.title)
-        manager.removeAllSelectedAsset()
+		if manager.options.clearSelectionAfterSwitchingAlbum {
+			manager.removeAllSelectedAsset()
+		}
         manager.cancelAllFetch()
-        toolBar.setEnable(false)
-        album.assets.forEach { $0.state = .unchecked }
+		toolBar.setEnable(!manager.selectedAssets.isEmpty)
+		album.assets.forEach { asset in
+			if !manager.options.clearSelectionAfterSwitchingAlbum,
+			   let selectAsset = manager.selectedAssets.first(where: { asset == $0 }) {
+				asset.state = .selected
+				asset.selectedNum = selectAsset.selectedNum
+                manager.updateAsset(asset) // The asset selected from other albums, so it should be replaced.
+			} else {
+				asset.state = .unchecked
+			}
+		}
         #if ANYIMAGEKIT_ENABLE_CAPTURE
         addCameraAssetIfNeeded()
         #endif
@@ -378,6 +407,7 @@ extension AssetPickerViewController {
     }
     
     @objc private func containerSizeDidChange(_ sender: Notification) {
+        containerSize = (sender.userInfo?[containerSizeKey] as? CGSize) ?? ScreenHelper.mainBounds.size
         guard collectionView.visibleCells.count > 0 else { return }
         let visibleCellRows = collectionView.visibleCells.map{ $0.tag }.sorted()
         let row = visibleCellRows[visibleCellRows.count / 2]
@@ -389,11 +419,13 @@ extension AssetPickerViewController {
     }
     
     @objc private func didSyncAsset(_ sender: Notification) {
-        guard let _ = sender.object as? String else { return }
-        guard manager.options.selectLimit == 1 && manager.options.selectionTapAction.hideToolBar else { return }
-        guard let asset = manager.selectedAssets.first else { return }
-        guard let cell = collectionView.cellForItem(at: IndexPath(row: asset.idx, section: 0)) as? AssetCell else { return }
-        cell.selectEvent.call()
+        DispatchQueue.main.async {
+            guard let _ = sender.object as? String else { return }
+            guard self.manager.options.selectLimit == 1 && self.manager.options.selectionTapAction.hideToolBar else { return }
+            guard let asset = self.manager.selectedAssets.first else { return }
+            guard let cell = self.collectionView.cellForItem(at: IndexPath(row: asset.idx, section: 0)) as? AssetCell else { return }
+            cell.selectEvent.call()
+        }
     }
 }
 
@@ -422,9 +454,9 @@ extension AssetPickerViewController {
     }
     
     @objc private func previewButtonTapped(_ sender: UIButton) {
-        guard let asset = manager.selectedAssets.first else { return }
-        let controller = PhotoPreviewController(manager: manager)
-        controller.currentIndex = asset.idx
+        manager.lastSelectedAssets = manager.selectedAssets
+        let controller = PhotoPreviewController(manager: manager, sourceType: .selectedAssets)
+        controller.currentIndex = 0
         controller.dataSource = self
         controller.delegate = self
         present(controller, animated: true, completion: nil)
@@ -460,7 +492,20 @@ extension AssetPickerViewController: PHPhotoLibraryChangeObserver {
         guard let album = album, let changeDetails = changeInstance.changeDetails(for: album.fetchResult) else { return }
         
         if #available(iOS 14.0, *), Permission.photos.status == .limited {
-            reloadAlbum(album)
+            if album.isCameraRoll {
+                reloadAlbum(album)
+            } else {
+                DispatchQueue.main.async {
+                    if !self.manager.options.clearSelectionAfterSwitchingAlbum,
+                       let smartAlbum = self.albums.first(where: { $0.isCameraRoll }) {
+                        self.setAlbum(smartAlbum)
+                        self.reloadAlbum(smartAlbum)
+                        self.updateAlbum(smartAlbum)
+                    } else {
+                        self.reloadAlbum(album)
+                    }
+                }
+            }
             return
         } else {
             guard changeDetails.hasIncrementalChanges else { return }
@@ -566,7 +611,8 @@ extension AssetPickerViewController: UICollectionViewDelegate {
         } else if !asset.isSelected && manager.isUpToLimit {
             return
         } else {
-            let controller = PhotoPreviewController(manager: manager)
+            let controller = PhotoPreviewController(manager: manager, sourceType: .album)
+            self.previewController = controller
             controller.currentIndex = indexPath.item - itemOffset
             controller.dataSource = self
             controller.delegate = self
@@ -586,15 +632,15 @@ extension AssetPickerViewController: UICollectionViewDelegate {
 extension AssetPickerViewController: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let contentSize = collectionView.bounds.inset(by: collectionView.contentInset).size
+        let maxSize = CGRect(origin: .zero, size: containerSize).inset(by: collectionView.contentInset).size
         let columnNumber: CGFloat
         if UIDevice.current.userInterfaceIdiom == .phone || !manager.options.autoCalculateColumnNumber {
             columnNumber = CGFloat(manager.options.columnNumber)
         } else {
-            let minWidth: CGFloat = 140
-            columnNumber = max(CGFloat(Int(contentSize.width / minWidth)), 3)
+            let minWidth: CGFloat = 135
+            columnNumber = max(CGFloat(Int(maxSize.width / minWidth)), 3)
         }
-        let width = floor((contentSize.width-(columnNumber-1)*defaultAssetSpacing)/columnNumber)
+        let width = floor((maxSize.width-(columnNumber-1)*defaultAssetSpacing)/columnNumber)
         return CGSize(width: width, height: width)
     }
 }
@@ -618,26 +664,58 @@ extension AssetPickerViewController: AlbumPickerViewControllerDelegate {
 extension AssetPickerViewController: PhotoPreviewControllerDataSource {
     
     func numberOfPhotos(in controller: PhotoPreviewController) -> Int {
-        guard let album = album else { return 0 }
-        #if ANYIMAGEKIT_ENABLE_CAPTURE
-        if album.isCameraRoll && !manager.options.captureOptions.mediaOptions.isEmpty {
-            return album.assets.count - 1
+        switch controller.sourceType {
+        case .album:
+            guard let album = album else { return 0 }
+            #if ANYIMAGEKIT_ENABLE_CAPTURE
+            if album.isCameraRoll && !manager.options.captureOptions.mediaOptions.isEmpty {
+                return album.assets.count - 1
+            }
+            #endif
+            return album.assets.count
+        case .selectedAssets:
+            return manager.lastSelectedAssets.count
         }
-        #endif
-        return album.assets.count
     }
     
     func previewController(_ controller: PhotoPreviewController, assetOfIndex index: Int) -> PreviewData {
-        let idx = index + itemOffset
-        let indexPath = IndexPath(item: idx, section: 0)
-        let cell = collectionView.cellForItem(at: indexPath) as? AssetCell
-        return (cell?.image, album!.assets[idx])
+        switch controller.sourceType {
+        case .album:
+            let idx = index + itemOffset
+            let indexPath = IndexPath(item: idx, section: 0)
+            let cell = collectionView.cellForItem(at: indexPath) as? AssetCell
+            return (cell?.image, album!.assets[idx])
+        case .selectedAssets:
+            let asset = manager.lastSelectedAssets[index]
+            return (asset.image, asset) // Warning: asset.image may not get thumbnail image
+        }
     }
+	
+	func previewController(_ controller: PhotoPreviewController, asset: Asset) -> PreviewData? {
+        switch controller.sourceType {
+        case .album:
+            guard let album, asset.idx < album.assets.count else { return nil }
+            if album.assets[asset.idx] == asset {
+                return previewController(controller, assetOfIndex: asset.idx)
+            } else if let currentAsset = album.assets.first(where: { asset == $0 }) {
+                return previewController(controller, assetOfIndex: currentAsset.idx)
+            } else {
+                return nil
+            }
+        case .selectedAssets:
+            return (asset.image, asset)
+        }
+	}
     
     func previewController(_ controller: PhotoPreviewController, thumbnailViewForIndex index: Int) -> UIView? {
-        let idx = index + itemOffset
-        let indexPath = IndexPath(item: idx, section: 0)
-        return collectionView.cellForItem(at: indexPath) ?? toolBar.leftButton
+        switch controller.sourceType {
+        case .album:
+            let idx = index + itemOffset
+            let indexPath = IndexPath(item: idx, section: 0)
+            return collectionView.cellForItem(at: indexPath) ?? toolBar.leftButton
+        case .selectedAssets:
+            return nil // Considering performance issues, searches are not performed.
+        }
     }
 }
 
@@ -664,11 +742,18 @@ extension AssetPickerViewController: PhotoPreviewControllerDelegate {
     }
     
     func previewControllerWillDisappear(_ controller: PhotoPreviewController) {
-        let idx = controller.currentIndex + itemOffset
-        let indexPath = IndexPath(item: idx, section: 0)
-        reloadData(animated: false)
-        if !(collectionView.visibleCells.map{ $0.tag }).contains(idx) {
-            collectionView.scrollToItem(at: indexPath, at: .centeredVertically, animated: false)
+        switch controller.sourceType {
+        case .album:
+            let idx = controller.currentIndex + itemOffset
+            let indexPath = IndexPath(item: idx, section: 0)
+            reloadData(animated: false)
+            if !(collectionView.visibleCells.map{ $0.tag }).contains(idx) {
+                if idx < collectionView.numberOfItems(inSection: 0) {
+                    collectionView.scrollToItem(at: indexPath, at: .centeredVertically, animated: false)
+                }
+            }
+        case .selectedAssets:
+            break
         }
     }
 }
@@ -681,6 +766,7 @@ extension AssetPickerViewController {
     }
     
     private func reloadData(animated: Bool = true) {
+        previewController?.reloadWhenPhotoLibraryDidChange()
         if #available(iOS 14.0, *) {
             let snapshot = initialSnapshot()
             dataSource.apply(snapshot, animatingDifferences: animated)
