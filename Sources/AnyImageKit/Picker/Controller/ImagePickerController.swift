@@ -101,9 +101,7 @@ open class ImagePickerController: AnyImageNavigationController {
         if manager.options.editorOptions.isEmpty {
             return .all
         } else {
-            switch UIApplication.shared.statusBarOrientation {
-            case .unknown:
-                return .portrait
+            switch ScreenHelper.interfaceOrientation {
             case .portrait:
                 return .portrait
             case .portraitUpsideDown:
@@ -112,6 +110,10 @@ open class ImagePickerController: AnyImageNavigationController {
                 return .landscapeLeft
             case .landscapeRight:
                 return .landscapeRight
+            case .unknown:
+                return .portrait
+            @unknown default:
+                return .portrait
             }
         }
         #else
@@ -120,11 +122,8 @@ open class ImagePickerController: AnyImageNavigationController {
     }
     
     open override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
-        return UIApplication.shared.statusBarOrientation
+        return ScreenHelper.interfaceOrientation
     }
-}
-
-extension ImagePickerController {
     
     open func update(options: PickerOptionsInfo) {
         guard viewControllers.isEmpty || enableForceUpdate else {
@@ -188,22 +187,38 @@ extension ImagePickerController {
         return options
     }
     
-    private func checkData() {
+    private func finishSelect() {
         view.hud.show()
         workQueue.async { [weak self] in
             guard let self = self else { return }
             let assets = self.manager.selectedAssets
-            let isReady = assets.filter{ !$0.isReady }.isEmpty
-            if !isReady && !assets.isEmpty { return }
-            self.saveEditPhotos(assets) { newAssets in
-                self.resizeImagesIfNeeded(newAssets)
-                DispatchQueue.main.async { [weak self] in
-                    guard let self = self else { return }
-                    self.view.hud.hide()
-                    let result = PickerResult(assets: newAssets, useOriginalImage: self.manager.useOriginalImage)
-                    guard self.didCallback == false else { return }
-                    self.pickerDelegate?.imagePicker(self, didFinishPicking: result)
-                    self.didCallback = true
+            var message: String? = nil
+            let group = DispatchGroup()
+            for asset in assets {
+                group.enter()
+                self.manager.syncAsset(asset) { success, errorMessage in
+                    message = errorMessage
+                    group.leave()
+                }
+            }
+            
+            group.notify(queue: .main) { [weak self] in
+                guard let self = self else { return }
+                self.view.hud.hide()
+                if let message = message {
+                    self.didFinishSelect = false
+                    Toast.show(message: message)
+                } else {
+                    self.saveEditPhotos(assets) { newAssets in
+                        self.resizeImagesIfNeeded(newAssets)
+                        DispatchQueue.main.async {
+                            self.view.hud.hide()
+                            let result = PickerResult(assets: newAssets, useOriginalImage: self.manager.useOriginalImage)
+                            guard self.didCallback == false else { return }
+                            self.pickerDelegate?.imagePicker(self, didFinishPicking: result)
+                            self.didCallback = true
+                        }
+                    }
                 }
             }
         }
@@ -272,7 +287,7 @@ extension ImagePickerController: AssetPickerViewControllerDelegate {
     func assetPickerDidFinishPicking(_ controller: AssetPickerViewController) {
         didFinishSelect = true
         manager.resynchronizeAsset()
-        checkData()
+        finishSelect()
     }
 }
 
@@ -281,25 +296,10 @@ extension ImagePickerController {
     
     private func addNotifications() {
         beginGeneratingDeviceOrientationNotifications()
-        NotificationCenter.default.addObserver(self, selector: #selector(didSyncAsset(_:)), name: .didSyncAsset, object: nil)
     }
     
     private func removeNotifications() {
         NotificationCenter.default.removeObserver(self)
         endGeneratingDeviceOrientationNotifications()
-    }
-    
-    @objc private func didSyncAsset(_ sender: Notification) {
-        DispatchQueue.main.async {
-            if self.didFinishSelect {
-                if let message = sender.object as? String {
-                    self.didFinishSelect = false
-                    self.view.hud.hide()
-                    Toast.show(message: message)
-                } else {
-                    self.checkData()
-                }
-            }
-        }
     }
 }

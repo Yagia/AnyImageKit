@@ -46,7 +46,7 @@
 
 ## 要求
 
-- iOS 12.0+
+- iOS 13.0+
 - Xcode 14.1+
 - Swift 5.7+
 
@@ -58,7 +58,7 @@
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/AnyImageKit/AnyImageKit.git", .upToNextMajor(from: "0.15.1"))
+    .package(url: "https://github.com/AnyImageKit/AnyImageKit.git", .upToNextMajor(from: "0.18.1"))
 ]
 ```
 
@@ -124,8 +124,23 @@ extension ViewController: ImagePickerControllerDelegate {
 
 ## 更新日志
 
+### 最新版本
+
+| Version | Release Date | Xcode | Swift | iOS |
+| ---- | ----  | ---- | ---- | ---- |
+| [v0.18.1](https://github.com/AnyImageKit/AnyImageKit/blob/master/Documentation/RELEASE_NOTE_CN.md#0181) | 2024-10-09 | 16.0 | 5.10 | 13.0+ |
+| [v0.18.0](https://github.com/AnyImageKit/AnyImageKit/blob/master/Documentation/RELEASE_NOTE_CN.md#0180) | 2024-10-08 | 16.0 | 5.10 | 12.0+ |
+
+
+<details>
+   <summary>历史版本</summary>  
+
 | 版本 | 发布时间 | Xcode | Swift | iOS |
 | ---- | ----  | ---- | ---- | ---- |
+| [v0.17.2](https://github.com/AnyImageKit/AnyImageKit/blob/master/Documentation/RELEASE_NOTE_CN.md#0172) | 2024-01-24 | 15.2 | 5.9 | 12.0+ |
+| [v0.17.1](https://github.com/AnyImageKit/AnyImageKit/blob/master/Documentation/RELEASE_NOTE_CN.md#0171) | 2024-01-12 | 15.2 | 5.9 | 12.0+ |
+| [v0.17.0](https://github.com/AnyImageKit/AnyImageKit/blob/master/Documentation/RELEASE_NOTE_CN.md#0170) | 2023-10-18 | 15.0 | 5.9 | 12.0+ |
+| [v0.16.0](https://github.com/AnyImageKit/AnyImageKit/blob/master/Documentation/RELEASE_NOTE_CN.md#0160) | 2023-05-09 | 14.3 | 5.8 | 12.0+ |
 | [v0.15.1](https://github.com/AnyImageKit/AnyImageKit/blob/master/Documentation/RELEASE_NOTE_CN.md#0151) | 2022-12-15 | 14.1 | 5.7 | 12.0+ |
 | [v0.15.0](https://github.com/AnyImageKit/AnyImageKit/blob/master/Documentation/RELEASE_NOTE_CN.md#0150) | 2022-11-11 | 14.1 | 5.7 | 12.0+ |
 | [v0.14.6](https://github.com/AnyImageKit/AnyImageKit/blob/master/Documentation/RELEASE_NOTE_CN.md#0146) | 2022-07-06 | 13.4.1 | 5.6 | 13.0+ |
@@ -145,6 +160,8 @@ extension ViewController: ImagePickerControllerDelegate {
 | [v0.11.0](https://github.com/AnyImageKit/AnyImageKit/blob/master/Documentation/RELEASE_NOTE_CN.md#0110) | 2020-12-18 | 12.2 | 5.3 | 10.0+ |
 | [v0.10.0](https://github.com/AnyImageKit/AnyImageKit/blob/master/Documentation/RELEASE_NOTE_CN.md#0100) | 2020-11-03 | 12.1 | 5.3 | 10.0+ |
 | [v0.9.0](https://github.com/AnyImageKit/AnyImageKit/blob/master/Documentation/RELEASE_NOTE_CN.md#090) | 2020-10-09 | 12.0 | 5.3 | 10.0+ |
+
+</details>
 
 ## 版权协议
 

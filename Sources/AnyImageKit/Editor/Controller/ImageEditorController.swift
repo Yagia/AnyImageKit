@@ -77,9 +77,7 @@ open class ImageEditorController: AnyImageNavigationController {
     }
     
     open override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        switch UIApplication.shared.statusBarOrientation {
-        case .unknown:
-            return .portrait
+        switch ScreenHelper.interfaceOrientation {
         case .portrait:
             return .portrait
         case .portraitUpsideDown:
@@ -88,15 +86,16 @@ open class ImageEditorController: AnyImageNavigationController {
             return .landscapeLeft
         case .landscapeRight:
             return .landscapeRight
+        case .unknown:
+            return .portrait
+        @unknown default:
+            return .portrait
         }
     }
     
     open override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
-        return UIApplication.shared.statusBarOrientation
+        return ScreenHelper.interfaceOrientation
     }
-}
-
-extension ImageEditorController {
     
     open func update(photo resource: EditorPhotoResource, options: EditorPhotoOptionsInfo) {
         guard viewControllers.isEmpty || enableForceUpdate else {
@@ -220,7 +219,7 @@ extension ImageEditorController: PhotoEditorControllerDelegate {
         let outputResult = output(photo: photo, fileType: .jpeg)
         switch outputResult {
         case .success(let url):
-            let result = EditorResult(mediaURL: url, type: .photo, isEdited: isEdited)
+            let result = EditorResult(mediaURL: url, type: .photo, videoEditingInfo: nil, isEdited: isEdited)
             editorDelegate?.imageEditor(self, didFinishEditing: result)
         case .failure(let error):
             _print(error.localizedDescription)
@@ -235,8 +234,9 @@ extension ImageEditorController: VideoEditorControllerDelegate {
         editorDelegate?.imageEditorDidCancel(self)
     }
     
-    func videoEditor(_ editor: VideoEditorController, didFinishEditing video: URL, isEdited: Bool) {
-        let result = EditorResult(mediaURL: video, type: .video, isEdited: isEdited)
+    func videoEditor(_ editor: VideoEditorController, didFinishEditing video: URL, clipRange: ClosedRange<CGFloat>, isEdited: Bool) {
+        let editingInfo = EditorResultVideoInfo(clipRange: clipRange)
+        let result = EditorResult(mediaURL: video, type: .video, videoEditingInfo: editingInfo, isEdited: isEdited)
         editorDelegate?.imageEditor(self, didFinishEditing: result)
     }
 }

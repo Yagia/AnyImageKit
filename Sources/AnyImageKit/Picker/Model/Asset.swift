@@ -69,6 +69,16 @@ extension Asset {
     }
     
     static let cameraItemIdx: Int = -1
+    
+    func cleanImageIfNeeded() {
+        guard state != .selected else { return }
+        if _images[.thumbnail] != nil {
+            _images.removeValue(forKey: .thumbnail)
+        }
+        if _images[.initial] != nil {
+            _images.removeValue(forKey: .initial)
+        }
+    }
 }
 
 extension Asset: CustomStringConvertible {
@@ -204,6 +214,7 @@ extension Asset {
     
     enum ImageKey: String, Hashable {
         
+        case thumbnail
         case initial
         case edited
         case output

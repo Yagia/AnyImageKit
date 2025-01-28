@@ -294,7 +294,7 @@ extension VideoIOComponent {
     }
 }
 
-// MARK: - Foucs
+// MARK: - Focus
 extension VideoIOComponent {
     
     func setFocus(mode: AVCaptureDevice.FocusMode) {
@@ -373,9 +373,6 @@ extension VideoIOComponent {
         self.orientation = orientation
         let settings = AVCapturePhotoSettings()
         settings.flashMode = flashMode.rawValue
-        #if !targetEnvironment(macCatalyst)
-        settings.isAutoStillImageStabilizationEnabled = photoOutput.isStillImageStabilizationSupported
-        #endif
         photoOutput.capturePhoto(with: settings, delegate: self)
     }
 }
@@ -451,7 +448,7 @@ extension VideoIOComponent {
             case .iso(let value):
                 return "ISO: \(String(format: "%.0f", value))"
             case .isAdjustingExposure(let value):
-                return "Exposuring: \(value)"
+                return "Exposing: \(value)"
             case .whiteBalance(let value):
                 return "White Balance: TEMP \(String(format: "%.0f", value.temperature)), TINT \(String(format: "%.0f", value.tint))"
             case .isAdjustingWhiteBalance(let value):

@@ -544,7 +544,7 @@ extension AssetPickerViewController: UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let asset = album?.assets[indexPath.item] else { return UICollectionViewCell() }
+        guard let asset = album?.assets[indexPath.item] else { return collectionView.dequeueReusableCell(UICollectionViewCell.self, for: indexPath) }
         
         #if ANYIMAGEKIT_ENABLE_CAPTURE
         if asset.isCamera {
@@ -626,6 +626,11 @@ extension AssetPickerViewController: UICollectionViewDelegate {
             cell.updateState(asset, manager: manager, animated: false)
         }
     }
+    
+    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        guard indexPath.item < (album?.assets.count ?? 0), let asset = album?.assets[indexPath.item], !asset.isCamera else { return }
+        asset.cleanImageIfNeeded()
+    }
 }
 
 // MARK: - UICollectionViewDelegateFlowLayout
@@ -687,7 +692,7 @@ extension AssetPickerViewController: PhotoPreviewControllerDataSource {
             return (cell?.image, album!.assets[idx])
         case .selectedAssets:
             let asset = manager.lastSelectedAssets[index]
-            return (asset.image, asset) // Warning: asset.image may not get thumbnail image
+            return (asset._image ?? asset._images[.thumbnail], asset)
         }
     }
 	
@@ -712,9 +717,12 @@ extension AssetPickerViewController: PhotoPreviewControllerDataSource {
         case .album:
             let idx = index + itemOffset
             let indexPath = IndexPath(item: idx, section: 0)
-            return collectionView.cellForItem(at: indexPath) ?? toolBar.leftButton
+            return collectionView.cellForItem(at: indexPath)
         case .selectedAssets:
-            return nil // Considering performance issues, searches are not performed.
+            let asset = manager.lastSelectedAssets[index]
+            let idx = asset.idx + itemOffset
+            let indexPath = IndexPath(item: idx, section: 0)
+            return collectionView.cellForItem(at: indexPath) ?? toolBar.leftButton
         }
     }
 }
@@ -746,7 +754,7 @@ extension AssetPickerViewController: PhotoPreviewControllerDelegate {
         case .album:
             let idx = controller.currentIndex + itemOffset
             let indexPath = IndexPath(item: idx, section: 0)
-            reloadData(animated: false)
+            reloadData(animated: false, reloadPreview: false)
             if !(collectionView.visibleCells.map{ $0.tag }).contains(idx) {
                 if idx < collectionView.numberOfItems(inSection: 0) {
                     collectionView.scrollToItem(at: indexPath, at: .centeredVertically, animated: false)
@@ -765,8 +773,10 @@ extension AssetPickerViewController {
         case main
     }
     
-    private func reloadData(animated: Bool = true) {
-        previewController?.reloadWhenPhotoLibraryDidChange()
+    private func reloadData(animated: Bool = true, reloadPreview: Bool = true) {
+        if reloadPreview {
+            previewController?.reloadWhenPhotoLibraryDidChange()
+        }
         if #available(iOS 14.0, *) {
             let snapshot = initialSnapshot()
             dataSource.apply(snapshot, animatingDifferences: animated)

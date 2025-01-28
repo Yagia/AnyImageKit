@@ -34,7 +34,7 @@ final class AssetCell: UICollectionViewCell {
         view.isHidden = true
         return view
     }()
-    private lazy var selectdCoverView: UIView = {
+    private lazy var selectedCoverView: UIView = {
         let view = UIView(frame: .zero)
         view.isHidden = true
         view.backgroundColor = UIColor.black.withAlphaComponent(0.5)
@@ -63,7 +63,7 @@ final class AssetCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         identifier = ""
-        selectdCoverView.isHidden = true
+        selectedCoverView.isHidden = true
         gifView.isHidden = true
         videoView.isHidden = true
         editedView.isHidden = true
@@ -82,7 +82,7 @@ final class AssetCell: UICollectionViewCell {
     
     private func setupView() {
         contentView.addSubview(imageView)
-        contentView.addSubview(selectdCoverView)
+        contentView.addSubview(selectedCoverView)
         contentView.addSubview(gifView)
         contentView.addSubview(videoView)
         contentView.addSubview(editedView)
@@ -93,7 +93,7 @@ final class AssetCell: UICollectionViewCell {
         imageView.snp.makeConstraints { maker in
             maker.edges.equalToSuperview()
         }
-        selectdCoverView.snp.makeConstraints { maker in
+        selectedCoverView.snp.makeConstraints { maker in
             maker.edges.equalToSuperview()
         }
         gifView.snp.makeConstraints { maker in
@@ -153,6 +153,7 @@ extension AssetCell {
             switch result {
             case .success(let response):
                 guard self.identifier == asset.identifier else { return }
+                asset._images[.thumbnail] = response.image
                 self.imageView.image = asset._image ?? response.image
                 if asset.mediaType == .video && !isPreview {
                     self.videoView.setVideoTime(asset.durationDescription)
@@ -182,10 +183,10 @@ extension AssetCell {
         }
         
         if isPreview {
-            selectdCoverView.isHidden = asset.isSelected
+            selectedCoverView.isHidden = asset.isSelected
         } else {
             selectButton.setNum(asset.selectedNum, isSelected: asset.isSelected, animated: animated)
-            selectdCoverView.isHidden = !asset.isSelected
+            selectedCoverView.isHidden = !asset.isSelected
             if asset.isDisable {
                 disableCoverView.isHidden = false
             } else {

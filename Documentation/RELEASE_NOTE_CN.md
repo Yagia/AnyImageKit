@@ -1,5 +1,65 @@
 # 更新日志
 
+## 0.18.1
+
+### 通用
+
+- 最低部署版本调整为 iOS 13.0
+- 支持 Kingfisher 8.0 版本。
+
+## 0.18.0
+
+### 修复
+
+- Picker
+  - 临时修复 Xcode 16 无法获取资源的问题（可能是系统的问题），目前 `albumOptions` （相册类型）配置会失效。([#190](https://github.com/AnyImageKit/AnyImageKit/issues/190))
+
+## 0.17.2
+
+### 修复
+
+- Picker
+  - 修复切换相册时闪退问题。
+
+## 0.17.1
+
+### 修复
+
+- Picker
+  - 修复 `preferredOutputPath` 未生效问题。([#187](https://github.com/AnyImageKit/AnyImageKit/pull/187))
+  - 修复 Picker 滚动时内存泄露问题。([#188](https://github.com/AnyImageKit/AnyImageKit/pull/188))
+
+## 0.17.0
+
+### 新增
+
+- Editor
+  - 新增配置 `clipRange` 用于设置视频裁剪的区间。
+
+### 修复
+
+- 通用
+  - 修复了一些警告和错别字
+- Picker
+  - 修复回调偶尔不会触发的问题。([#182](https://github.com/AnyImageKit/AnyImageKit/pull/182))
+- Editor
+  - 修复当图片 EXIF 信息中携带方向信息时，无法正确处理图片方向的问题。
+  - 修复视频编辑过程中拖动进度条可能导致崩溃的问题。
+
+## 0.16.0
+
+### 新增
+
+- Picker
+  - 切换相册后保留所选资源。
+  - 预览功能进行拆分。([#167](https://github.com/AnyImageKit/AnyImageKit/pull/167))
+  - 新增配置 `clearSelectionAfterSwitchingAlbum` 用于切换相册后保留/删除已选中的资源。
+
+### 修复
+
+- Picker
+  - 修复未再主线程调用 UI 问题。
+
 ## 0.15.1
 
 ### 修复

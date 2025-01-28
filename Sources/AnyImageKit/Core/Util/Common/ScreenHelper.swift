@@ -10,36 +10,45 @@ import UIKit
 
 struct ScreenHelper {
     
+    static var windowScene: UIWindowScene? {
+        let connectedScenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        return (connectedScenes.first(where: { $0.activationState == .foregroundActive })) ?? connectedScenes.first(where: { $0.activationState == .foregroundInactive })
+    }
+    
     static var keyWindow: UIWindow? {
-        if #available(iOS 13.0, *) {
-            let connectedScenes = UIApplication.shared.connectedScenes
-            let scene = connectedScenes.first(where: { $0.activationState == .foregroundActive && $0 is UIWindowScene }) ?? connectedScenes.first(where: { $0.activationState == .foregroundInactive && $0 is UIWindowScene })
-            return scene
-                .flatMap({ $0 as? UIWindowScene })?
-                .windows
-                .first(where: { $0.isKeyWindow })
-        } else {
-            return UIApplication.shared.keyWindow
-        }
+        return windowScene?
+            .windows
+            .first(where: { $0.isKeyWindow })
     }
     
     static var statusBarFrame: CGRect {
-        if #available(iOS 13.0, *) {
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene, let statusBarFrame = windowScene.statusBarManager?.statusBarFrame {
-                return statusBarFrame
-            }
+        if let windowScene = windowScene,
+           let statusBarFrame = windowScene.statusBarManager?.statusBarFrame {
+            return statusBarFrame
+        } else {
+            return .zero
         }
-        return UIApplication.shared.statusBarFrame
+    }
+    
+    static var interfaceOrientation: UIInterfaceOrientation {
+        if let windowScene = windowScene {
+            return windowScene.interfaceOrientation
+        } else {
+            return .portrait
+        }
     }
     
     static var mainBounds: CGRect {
         if #available(iOS 13.0, *) {
-            for scene in UIApplication.shared.connectedScenes {
-                if scene.activationState == .foregroundActive, let delegate = scene.delegate as? UIWindowSceneDelegate, let bounds = delegate.window??.bounds {
-                    return bounds
-                }
-            }
+            let keyWindow = UIApplication.shared.connectedScenes
+                .filter { $0.activationState == .foregroundActive }
+                .map { $0 as? UIWindowScene }
+                .compactMap { $0 }
+                .first?.windows
+                .filter { $0.isKeyWindow }.first
+            return keyWindow?.bounds ?? .zero
+        } else {
+            return UIApplication.shared.windows[0].bounds
         }
-        return UIApplication.shared.windows[0].bounds
     }
 }

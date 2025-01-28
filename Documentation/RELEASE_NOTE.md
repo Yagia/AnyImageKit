@@ -1,5 +1,65 @@
 # Release Notes
 
+## 0.18.1
+
+### General
+
+- Set framework minimum deployment target to 13.0
+- Support Kingfisher 8.0
+
+## 0.18.0
+
+### Resolved
+
+- Picker
+  - Temporary workaround for Xcode 16 failing to retrieve resources (possibly a system issue), where the `albumOptions` configuration is currently ineffective.([#190](https://github.com/AnyImageKit/AnyImageKit/issues/190))
+
+## 0.17.2
+
+### Resolved
+
+- Picker
+  - Index out of range when switch album.
+
+## 0.17.1
+
+### Resolved
+
+- Picker
+  - Fixed an issue that `preferredOutputPath` dose not work.([#187](https://github.com/AnyImageKit/AnyImageKit/pull/187))
+  - Fixed an issue that memory leak when scrolling the picker.([#188](https://github.com/AnyImageKit/AnyImageKit/pull/188))
+
+## 0.17.0
+
+### New Features
+
+- Editor
+  - Added a new configuration `clipRange` to set the range for video clipping.
+
+### Resolved
+
+- General
+  - Fixed some warnings and typos.
+- Picker
+  - Fixed an issue that callbacks were occasionally not triggered.([#182](https://github.com/AnyImageKit/AnyImageKit/pull/182))
+- Editor
+  - Fixed an issue that images with orientation information in their EXIF data were not correctly handled.
+  - Fixed a crash that could occur when dragging the progress bar during video editing.
+
+## 0.16.0
+
+### New Features
+
+- Picker
+  - Keep selected resources when switching albums.
+  - Split the preview function into "Album Preview" and "Selected Resource Preview".([#167](https://github.com/AnyImageKit/AnyImageKit/pull/167))
+  - Added a new configuration `clearSelectionAfterSwitchingAlbum` to keep **OR** delete selected resources when switching albums.
+
+### Resolved
+
+- Picker
+  - Crash that UI API not call on main thread.
+
 ## 0.15.1
 
 ### Resolved

@@ -12,7 +12,7 @@ import Photos
 protocol VideoEditorControllerDelegate: AnyObject {
     
     func videoEditorDidCancel(_ editor: VideoEditorController)
-    func videoEditor(_ editor: VideoEditorController, didFinishEditing video: URL, isEdited: Bool)
+    func videoEditor(_ editor: VideoEditorController, didFinishEditing video: URL, clipRange: ClosedRange<CGFloat>, isEdited: Bool)
 }
 
 final class VideoEditorController: AnyImageViewController {
@@ -123,30 +123,31 @@ final class VideoEditorController: AnyImageViewController {
     
     private func loadData() {
         resource.loadURL { [weak self] (result) in
-            guard let self = self else { return }
-            switch result {
-            case .success(let url):
-                self.view.hud.hide()
-                DispatchQueue.main.async { [weak self] in
-                    guard let self = self else { return }
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch result {
+                case .success(let url):
+                    self.view.hud.hide()
                     self.url = url
                     self.toolView.isHidden = false
                     if self.toolView.selectOption(.clip) {
                         self.cropToolView.isHidden = false
                     }
                     self.getProgressImage(url: url) { [weak self] (image) in
-                        self?.videoPreview.setThumbnail(image)
-                        self?.videoPreview.setupPlayer(url: url)
-                        self?.setupProgressImage(url: url, image: image)
+                        guard let self else { return }
+                        self.videoPreview.setThumbnail(image)
+                        self.videoPreview.setupPlayer(url: url)
+                        self.setupProgressImage(url: url, image: image)
+                        self.cropToolView.progressView.setCropProgress(self.options.clipRange)
                     }
+                case .failure(let error):
+                    if error == .cannotFindInLocal {
+                        self.view.hud.show()
+                        return
+                    }
+                    _print("Fetch URL failed: \(error.localizedDescription)")
+                    self.delegate?.videoEditorDidCancel(self)
                 }
-            case .failure(let error):
-                if error == .cannotFindInLocal {
-                    self.view.hud.show()
-                    return
-                }
-                _print("Fetch URL failed: \(error.localizedDescription)")
-                self.delegate?.videoEditorDidCancel(self)
             }
         }
     }
@@ -166,12 +167,13 @@ extension VideoEditorController {
     
     @objc private func doneButtonTapped(_ sender: UIButton) {
         guard let url = url else { return }
-        let start = cropToolView.progressView.left
-        let end = cropToolView.progressView.right
-        let isEdited = end - start != 1
+        let start = cropToolView.progressView.leftProgress
+        let end = cropToolView.progressView.rightProgress
+        let clipRange = start...end
+        let isEdited = clipRange.lowerBound.distance(to: clipRange.upperBound) != 1
         if let url = resource as? URL, !isEdited {
             _print("Export video at \(url)")
-            delegate?.videoEditor(self, didFinishEditing: url, isEdited: isEdited)
+            delegate?.videoEditor(self, didFinishEditing: url, clipRange: clipRange, isEdited: isEdited)
             trackObserver?.track(event: .editorDone, userInfo: [.page: AnyImagePage.editorVideo])
             return
         }
@@ -180,7 +182,7 @@ extension VideoEditorController {
             switch result {
             case .success(let url):
                 _print("Export video at \(url)")
-                self.delegate?.videoEditor(self, didFinishEditing: url, isEdited: isEdited)
+                self.delegate?.videoEditor(self, didFinishEditing: url, clipRange: clipRange, isEdited: isEdited)
                 self.trackObserver?.track(event: .editorDone, userInfo: [.page: AnyImagePage.editorVideo])
             case .failure(let error):
                 _print(error.localizedDescription)
@@ -194,7 +196,7 @@ extension VideoEditorController: VideoPreviewDelegate {
     
     func previewPlayerDidPlayToEndTime(_ view: VideoPreview) {
         cropToolView.playButton.isSelected = view.isPlaying
-        view.setProgress(cropToolView.progressView.left)
+        view.setProgress(cropToolView.progressView.leftProgress)
     }
 }
 
@@ -301,11 +303,11 @@ extension VideoEditorController {
                 let progress = CGFloat(current.seconds / total.seconds)
                 let progressView = self.cropToolView.progressView
                 self.cropToolView.progressView.setProgress(progress)
-                if progress >= progressView.right {
+                if progress >= progressView.rightProgress {
                     self.videoPreview.player?.pause()
                     self.cropToolView.playButton.isSelected = self.videoPreview.isPlaying
-                    self.cropToolView.progressView.setProgress(self.cropToolView.progressView.left)
-                    self.videoPreview.setProgress(self.cropToolView.progressView.left)
+                    self.cropToolView.progressView.setProgress(self.cropToolView.progressView.leftProgress)
+                    self.videoPreview.setProgress(self.cropToolView.progressView.leftProgress)
                 }
             })
         }
@@ -341,17 +343,17 @@ extension VideoEditorController {
         }
         compositionTrack.preferredTransform = assetVideoTrack.preferredTransform
         
-        let videolayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: compositionTrack)
-        videolayerInstruction.setOpacity(0.0, at: asset.duration)
+        let videoLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: compositionTrack)
+        videoLayerInstruction.setOpacity(0.0, at: asset.duration)
         
-        let videoCompositionInstrution = AVMutableVideoCompositionInstruction()
-        videoCompositionInstrution.timeRange = CMTimeRange(start: .zero, duration: compositionTrack.asset!.duration)
-        videoCompositionInstrution.layerInstructions = [videolayerInstruction]
+        let videoCompositionInstruction = AVMutableVideoCompositionInstruction()
+        videoCompositionInstruction.timeRange = CMTimeRange(start: .zero, duration: compositionTrack.asset!.duration)
+        videoCompositionInstruction.layerInstructions = [videoLayerInstruction]
         
         let videoComposition = AVMutableVideoComposition()
         videoComposition.renderSize = compositionTrack.naturalSize
         videoComposition.frameDuration = CMTime(seconds: 1, preferredTimescale: 30)
-        videoComposition.instructions = [videoCompositionInstrution]
+        videoComposition.instructions = [videoCompositionInstruction]
         return videoComposition
     }
     
