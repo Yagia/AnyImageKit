@@ -45,7 +45,7 @@ final class AssetPickerViewController: AnyImageViewController {
                 return validDataSource
             } else {
                 print("Error: _dataSource is nil or of incorrect type.")
-                setupDataSource()  // DataSource'u yeniden kurmayı deneyelim
+                setupDataSource()
                 return _dataSource as! UICollectionViewDiffableDataSource<Section, Asset>
             }        }
         set {
