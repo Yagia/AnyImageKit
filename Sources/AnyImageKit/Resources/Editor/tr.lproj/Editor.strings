@@ -6,12 +6,12 @@
   Copyright © 2021-2022 AnyImageKit.org. All rights reserved.
 */
 
-"BRUSH" = "Kalem";
-"CROP" = "Kırp";
-"MOSAIC" = "Mozaik";
-"INPUT_TEXT" = "Metin ekle";
+"BRUSH" = "kalem";
+"CROP" = "kırp";
+"MOSAIC" = "mozaik";
+"INPUT_TEXT" = "metin ekle";
 
-"FREE" = "Serbest";
+"FREE" = "serbest";
 
-"DRAG_HERE_TO_REMOVE" = "Silmek için sürükle";
-"RELEASE_TO_REMOVE" = "Silmek için bırak";
+"DRAG_HERE_TO_REMOVE" = "silmek için sürükle";
+"RELEASE_TO_REMOVE" = "silmek için bırak";
