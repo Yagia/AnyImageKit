@@ -41,13 +41,8 @@ final class AssetPickerViewController: AnyImageViewController {
                     return nil
                 }
             }
-            if let validDataSource = _dataSource as? UICollectionViewDiffableDataSource<Section, Asset> {
-                return validDataSource
-            } else {
-                print("Error: _dataSource is nil or of incorrect type.")
-                setupDataSource()
-                return _dataSource as! UICollectionViewDiffableDataSource<Section, Asset>
-            }        }
+            return _dataSource as! UICollectionViewDiffableDataSource<Section, Asset>
+        }
         set {
             _dataSource = newValue
         }
@@ -151,7 +146,6 @@ final class AssetPickerViewController: AnyImageViewController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        containerSize = collectionView.bounds.size
         if autoScrollToLatest {
             scrollToEnd()
             autoScrollToLatest = false
@@ -258,21 +252,21 @@ extension AssetPickerViewController {
         guard self.album != album else { return }
         self.album = album
         titleView.setTitle(album.title)
-        if manager.options.clearSelectionAfterSwitchingAlbum {
-            manager.removeAllSelectedAsset()
-        }
+		if manager.options.clearSelectionAfterSwitchingAlbum {
+			manager.removeAllSelectedAsset()
+		}
         manager.cancelAllFetch()
-        toolBar.setEnable(!manager.selectedAssets.isEmpty)
-        album.assets.forEach { asset in
-            if !manager.options.clearSelectionAfterSwitchingAlbum,
-               let selectAsset = manager.selectedAssets.first(where: { asset == $0 }) {
-                asset.state = .selected
-                asset.selectedNum = selectAsset.selectedNum
+		toolBar.setEnable(!manager.selectedAssets.isEmpty)
+		album.assets.forEach { asset in
+			if !manager.options.clearSelectionAfterSwitchingAlbum,
+			   let selectAsset = manager.selectedAssets.first(where: { asset == $0 }) {
+				asset.state = .selected
+				asset.selectedNum = selectAsset.selectedNum
                 manager.updateAsset(asset) // The asset selected from other albums, so it should be replaced.
-            } else {
-                asset.state = .unchecked
-            }
-        }
+			} else {
+				asset.state = .unchecked
+			}
+		}
         #if ANYIMAGEKIT_ENABLE_CAPTURE
         addCameraAssetIfNeeded()
         #endif
@@ -387,6 +381,7 @@ extension AssetPickerViewController {
     
     func selectItem(_ idx: Int) {
         guard let album = album else { return }
+        guard idx >= 0 && idx < album.assets.count else { return }
         let asset = album.assets[idx]
         
         if !asset.isSelected {
@@ -588,6 +583,7 @@ extension AssetPickerViewController: UICollectionViewDelegate {
             asset = item
         } else {
             guard let album = album else { return }
+            guard indexPath.item >= 0 && indexPath.item < album.assets.count else { return }
             asset = album.assets[indexPath.item]
         }
         
@@ -627,7 +623,9 @@ extension AssetPickerViewController: UICollectionViewDelegate {
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        guard let asset = album?.assets[indexPath.item], !asset.isCamera else { return }
+        guard let album = album, indexPath.item < album.assets.count else { return }
+        let asset = album.assets[indexPath.item]
+        guard !asset.isCamera else { return }
         if let cell = cell as? AssetCell {
             cell.updateState(asset, manager: manager, animated: false)
         }
@@ -651,11 +649,7 @@ extension AssetPickerViewController: UICollectionViewDelegateFlowLayout {
             let minWidth: CGFloat = 135
             columnNumber = max(CGFloat(Int(maxSize.width / minWidth)), 3)
         }
-        var width = floor((maxSize.width-(columnNumber-1)*defaultAssetSpacing)/columnNumber)
-        if width < 0 {
-            width = 0
-        }
-        
+        let width = max(0, floor((maxSize.width-(columnNumber-1)*defaultAssetSpacing)/columnNumber))
         return CGSize(width: width, height: width)
     }
 }
@@ -705,8 +699,8 @@ extension AssetPickerViewController: PhotoPreviewControllerDataSource {
             return (asset._image ?? asset._images[.thumbnail], asset)
         }
     }
-    
-    func previewController(_ controller: PhotoPreviewController, asset: Asset) -> PreviewData? {
+	
+	func previewController(_ controller: PhotoPreviewController, asset: Asset) -> PreviewData? {
         switch controller.sourceType {
         case .album:
             guard let album, asset.idx < album.assets.count else { return nil }
@@ -720,12 +714,13 @@ extension AssetPickerViewController: PhotoPreviewControllerDataSource {
         case .selectedAssets:
             return (asset.image, asset)
         }
-    }
+	}
     
     func previewController(_ controller: PhotoPreviewController, thumbnailViewForIndex index: Int) -> UIView? {
         switch controller.sourceType {
         case .album:
             let idx = index + itemOffset
+            guard let album = album, idx >= 0 && idx < album.assets.count else { return nil }
             let indexPath = IndexPath(item: idx, section: 0)
             return collectionView.cellForItem(at: indexPath)
         case .selectedAssets:
@@ -784,16 +779,21 @@ extension AssetPickerViewController {
     }
     
     private func reloadData(animated: Bool = true, reloadPreview: Bool = true) {
+        collectionView.isUserInteractionEnabled = false
         if reloadPreview {
             previewController?.reloadWhenPhotoLibraryDidChange()
         }
         if #available(iOS 14.0, *) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                let snapshot = self.initialSnapshot()
-                self.dataSource.apply(snapshot, animatingDifferences: animated)
+            setupDataSource()
+            let snapshot = initialSnapshot()
+            dataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
+                self?.collectionView.isUserInteractionEnabled = true
             }
         } else {
             collectionView.reloadData()
+            DispatchQueue.main.async { [weak self] in
+                self?.collectionView.isUserInteractionEnabled = true
+            }
         }
     }
     
@@ -836,6 +836,5 @@ extension AssetPickerViewController {
                 return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: asset)
             }
         }
-        print("_dataSource successfully set: \(_dataSource != nil)")
     }
 }

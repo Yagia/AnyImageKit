@@ -219,17 +219,7 @@ final class PhotoPreviewController: AnyImageViewController, PickerOptionsConfigu
 extension PhotoPreviewController {
     
     func reloadWhenPhotoLibraryDidChange() {
-        collectionView.reloadData()
-        let count = collectionView.numberOfItems(inSection: 0)
-        if currentIndex >= count {
-            switch manager.options.orderByDate {
-            case .asc:
-                currentIndex = count - 1
-            case .desc:
-                currentIndex = 0
-            }
-            collectionView.reloadData()
-        }
+        dismiss(animated: true)
     }
 }
 
@@ -335,7 +325,12 @@ extension PhotoPreviewController {
     }
     
     private func didSetCurrentIdx() {
-        guard let data = dataSource?.previewController(self, assetOfIndex: currentIndex) else { return }
+        guard
+            let count = dataSource?.numberOfPhotos(in: self),
+            currentIndex < count,
+            let data = dataSource?.previewController(self, assetOfIndex: currentIndex) else {
+            return
+        }
         navigationBar.selectButton.isEnabled = true
         navigationBar.selectButton.setNum(data.asset.selectedNum, isSelected: data.asset.isSelected, animated: false)
         indexView.currentAsset = data.asset
