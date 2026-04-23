@@ -387,6 +387,7 @@ extension AssetPickerViewController {
     
     func selectItem(_ idx: Int) {
         guard let album = album else { return }
+        guard idx >= 0, idx < album.assets.count else { return }
         let asset = album.assets[idx]
         
         if !asset.isSelected {
